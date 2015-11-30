@@ -10,6 +10,8 @@ def getConditions(conditions):
     elif conditions.find("or") != -1:
         conditions = conditions.split("or")
         returnConditions.append("or")
+    else:
+        returnConditions.append("none")
     for condition in conditions:
         condition = condition.split(" ")
         pieces = list()
@@ -24,22 +26,30 @@ def getFields(fields):
     while(len(fields)  > 0):
         field0 = fields[0]
         field1 = fields[1]
-        returnFields.append([field0, field1.strip("\n")])
+        returnFields.append([field0.strip(":"), field1.strip("\n")])
         fields.remove(field0)
         fields.remove(field1)
     return returnFields
 
 def processConditions(conditions,filePointer):
+    remainingFields = list()
     for condition in conditions:
-        if condition != "and":
+        if condition[1] == "=":
+            successfulConditions = list()
             for line in filePointer:
                 fields = getFields(line)
-                print(fields)
+                isTrue = False
+                for field in fields:
+                    if field[0] == condition[0] and field[1] == condition[2]:
+                        isTrue = True
+                if(isTrue):
+                    remainingFields.append(fields)
+
         # elif condition[1] == "<":
         # elif condition[1] == ">":
         # elif condition[1] == "<=":
         # elif condition[1] == ">=":
-
+    return remainingFields
 
 def main():
     print("NoSQL Interpreter")
@@ -55,8 +65,8 @@ def main():
             else:
                 parameters = parameters.split(",")
                 conditions = getConditions(parameters[0])
-                print(conditions)
-                processConditions(conditions,collection)
+                fields = processConditions(conditions, collection)
+                print(fields)
                 #fields = getFields(parameters[1])
                 for parameter in parameters:
                     for doc in collection:
