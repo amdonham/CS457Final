@@ -33,28 +33,123 @@ def getFields(fields):
 
 def processConditions(conditions,filePointer):
     remainingFields = list()
-    for condition in conditions:
-        if condition[1] == "=":
-            successfulConditions = list()
-            for line in filePointer:
-                fields = getFields(line)
-                isTrue = False
-                for field in fields:
-                    if field[0] == condition[0] and field[1] == condition[2]:
-                        isTrue = True
-                if(isTrue):
-                    remainingFields.append(fields)
+    if conditions[0] == "and":
+        checkAnd = True
+        file = True
+        for condition in conditions:
+            if condition[1] == "=":
+                successfulConditions = list()
+                if file:
+                    for line in filePointer:
+                        fields = getFields(line)
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) == int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            remainingFields.append(fields)
+                    file = False
+                else:
+                    temp = list()
+                    for fields in remainingFields:
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) == int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            temp.append(fields)
+                    remainingFields = temp
 
-        # elif condition[1] == "<":
-        # elif condition[1] == ">":
-        # elif condition[1] == "<=":
-        # elif condition[1] == ">=":
+            elif condition[1] == "<":
+                if file:
+                    for line in filePointer:
+                        fields = getFields(line)
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) < int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            remainingFields.append(fields)
+                    file = False
+                else:
+                    temp = list()
+                    for fields in remainingFields:
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) < int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            temp.append(fields)
+                    remainingFields = temp
+            elif condition[1] == ">":
+                if file:
+                    for line in filePointer:
+                        fields = getFields(line)
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) > int(condition[2]):
+                                isTrue = True
+                        if isTrue:
+                            remainingFields.append(fields)
+                    file = False
+                else:
+                    temp = list()
+                    for fields in remainingFields:
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) > int(condition[2]):
+                                isTrue = True
+                        if isTrue:
+                            temp.append(fields)
+                    remainingFields = temp
+            elif condition[1] == "<=":
+                if file:
+                    for line in filePointer:
+                        fields = getFields(line)
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) <= int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            remainingFields.append(fields)
+                    file = False
+                else:
+                    temp = list()
+                    for fields in remainingFields:
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) <= int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            temp.append(fields)
+                    remainingFields = temp
+            elif condition[1] == ">=":
+                if file:
+                    for line in filePointer:
+                        fields = getFields(line)
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) >= int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            remainingFields.append(fields)
+                    file = False
+                else:
+                    temp = list()
+                    for fields in remainingFields:
+                        isTrue = False
+                        for field in fields:
+                            if field[0] == condition[0] and int(field[1]) >= int(condition[2]):
+                                isTrue = True
+                        if(isTrue):
+                            temp.append(fields)
+                    remainingFields = temp
     return remainingFields
 
 def main():
     print("NoSQL Interpreter")
     #query = input("Enter a query: ")
-    query = "db.CS457.query(Age > 15 and Manager = 555)"
+    query = "db.CS457.query(Dept < 20 and SNum <= 1000)"
     query = query.split(".")
     with open (query[1]+'.txt', 'r') as collection:
         command = query[2].split("(")[0]
@@ -66,7 +161,8 @@ def main():
                 parameters = parameters.split(",")
                 conditions = getConditions(parameters[0])
                 fields = processConditions(conditions, collection)
-                print(fields)
+                for field in fields:
+                    print(field)
                 #fields = getFields(parameters[1])
                 for parameter in parameters:
                     for doc in collection:
