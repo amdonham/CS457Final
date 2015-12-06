@@ -27,8 +27,6 @@ def parseConditions(conditions):
     returnConditions.append(statement)
     return returnConditions
 
-
-
 def filterFields(parsedFields,fields):
     returnList = list()
     returnRow = ''
@@ -45,12 +43,6 @@ def filterFields(parsedFields,fields):
             returnList.append(returnRow)
         returnRow = ''
     return returnList
-
-
-
-
-
-
 
 def clean(db):
     newDB = list()
@@ -98,10 +90,47 @@ def filter(conditions,db):
 
     return result
 
+def sum(field,db):
+    returnFields = filterFields(db, field)
+    if len(returnFields) == 0:
+        return None
+    sum = 0
+    for item in returnFields:
+        if item != None:
+            item = item.split(" ")
+            sum += int(item[1])
+    return sum
+
+def avg(field,db):
+    returnFields = filterFields(db, field)
+    if len(returnFields) == 0:
+     return None
+    sum = 0
+    count = 0
+    for item in returnFields:
+        if item != None:
+            item = item.split(" ")
+            sum += int(item[1])
+            count+=1
+    avg = sum/count
+    return avg
+
+def max(field,db):
+    returnFields = filterFields(db, field)
+    max = None
+    for item in returnFields:
+        if item != None:
+            item = item.split(" ")
+            if max == None or int(item[1]) > max:
+                max = int(item[1])
+    return max
+
+
+
 def main():
     print("NoSQL Interpreter")
     #query = input("Enter a query: ")
-    query = "db.CS457.query(Manager = 555, SNum+Dept)"
+    query = "db.CS457.max(SNum)"
     query = query.split(".")
     db = ''
     with open (query[1]+'.txt', 'r') as collection:
@@ -118,14 +147,26 @@ def main():
             parameters = parameters.split(",")
             conditions = parseConditions(parameters[0])
             parsedFields = filter(conditions, db)
-            returnFields = filterFields(parsedFields,parameters[1].strip(" "))
+            returnFields = filterFields(parsedFields, parameters[1].strip(" "))
             for row in returnFields:
                 print(row)
 
+    if command == "sum" :
+        field = parameters
+        ret = sum(field,db)
+        if ret != None:
+            print(ret)
 
+    if command == "avg" :
+        field = parameters
+        ret = avg(field,db)
+        if ret != None:
+            print(ret)
 
-
-
-
+    if command == "max" :
+        field = parameters
+        ret = max(field,db)
+        if ret != None:
+            print(ret)
 main()
 
