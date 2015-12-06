@@ -46,9 +46,12 @@ def filterFields(parsedFields,fields):
 
 def clean(db):
     newDB = list()
+    id = 1
     for row in db:
         row = row.strip(" \n")
+        row = "ID: " + str(id) + " " + row
         newDB.append(row)
+        id += 1
     return newDB
 
 def filter(conditions,db):
@@ -125,48 +128,83 @@ def max(field,db):
                 max = int(item[1])
     return max
 
+def cartProds(fields,db):
+    fieldVals = list()
+    for field in fields:
+        fieldVals.append(filterFields(db,field.strip(" ")))
+    ret = doCartProd(fieldVals)
+    if len(ret) == 0:
+        return None
+    return ret
 
+def doCartProd(fields):
+    retList = list()
+    for field in fields[0]:
+        for otherField in fields[1]:
+            retList.append(field + " " + otherField)
+    return retList
 
 def main():
     print("NoSQL Interpreter")
-    #query = input("Enter a query: ")
-    query = "db.CS457.max(SNum)"
-    query = query.split(".")
-    db = ''
-    with open (query[1]+'.txt', 'r') as collection:
-        db = collection.readlines()
-        db = clean(db)
-    collection.close()
-    #print(db)
-    command = query[2].split("(")[0]
-    parameters = query[2].split("(")[1].strip(")")
-    if command == "query":
-        if parameters == '':
-            printAllFields(collection)
-        else:
-            parameters = parameters.split(",")
-            conditions = parseConditions(parameters[0])
-            parsedFields = filter(conditions, db)
-            returnFields = filterFields(parsedFields, parameters[1].strip(" "))
-            for row in returnFields:
-                print(row)
+    while(True):
+        query = input("Enter a query: ")
+        query = query.strip(" ")
+        #query = "db.CS457.cartprod(Dept,Age)"
+        query = query.split(".")
+        db = ''
+        with open (query[1]+'.txt', 'r') as collection:
+            db = collection.readlines()
+            db = clean(db)
+        collection.close()
+        #print(db)
+        command = query[2].split("(")[0]
+        parameters = query[2].split("(")[1].strip(")")
+        if command == "query":
+            if parameters == '':
+                printAllFields(collection)
+            else:
+                parameters = parameters.split(",")
+                conditions = parseConditions(parameters[0])
+                parsedFields = ''
+                if conditions[0][0] != '':
+                    parsedFields = filter(conditions, db)
+                else:
+                    parsedFields = db
+                if len(parameters) > 1:
+                    returnFields = filterFields(parsedFields, parameters[1].strip(" "))
+                    for row in returnFields:
+                        print(row)
+                else:
+                    returnFields = filterFields(parsedFields, '')
+                    for row in parsedFields:
+                        print(row)
 
-    if command == "sum" :
-        field = parameters
-        ret = sum(field,db)
-        if ret != None:
-            print(ret)
+        if command == "sum" :
+            field = parameters
+            ret = sum(field,db)
+            if ret != None:
+                print(ret)
 
-    if command == "avg" :
-        field = parameters
-        ret = avg(field,db)
-        if ret != None:
-            print(ret)
+        if command == "avg" :
+            field = parameters
+            ret = avg(field,db)
+            if ret != None:
+                print(ret)
 
-    if command == "max" :
-        field = parameters
-        ret = max(field,db)
-        if ret != None:
-            print(ret)
+        if command == "max" :
+            field = parameters
+            ret = max(field,db)
+            if ret != None:
+                print(ret)
+
+        if command == "cartprod":
+            fields = parameters.split(",")
+            ret = cartProds(fields,db)
+            if ret != None:
+                for item in ret:
+                    print(item)
+
+
+
 main()
 
