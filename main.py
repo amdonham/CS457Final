@@ -1,24 +1,30 @@
+import operator
+
+def get_operator_fn(op):
+    return {
+        '=' : operator.eq,
+        '>' : operator.gt,
+        '<' : operator.lt,
+        '>=' : operator.ge,
+        '<=' : operator.le
+        }[op]
+
 def printAllFields(filePointer):
     for line in filePointer:
         print(line)
 
-def getConditions(conditions):
+def parseConditions(conditions):
     returnConditions = list()
-    if conditions.find("and") != -1:
-        conditions = conditions.split("and")
-        returnConditions.append("and")
-    elif conditions.find("or") != -1:
-        conditions = conditions.split("or")
-        returnConditions.append("or")
-    else:
-        returnConditions.append("none")
+    conditions = conditions.split(" ")
+    statement = list()
     for condition in conditions:
-        condition = condition.split(" ")
-        pieces = list()
-        for piece in condition:
-            if piece != "":
-                pieces.append(piece)
-        returnConditions.append(pieces)
+        if condition == "and" or condition == "or":
+            returnConditions.append(statement)
+            returnConditions.append(condition)
+            statement = list()
+        else:
+            statement.append(condition)
+    returnConditions.append(statement)
     return returnConditions
 def getFields(fields):
     returnFields = list()
@@ -31,144 +37,80 @@ def getFields(fields):
         fields.remove(field1)
     return returnFields
 
-def processConditions(conditions,filePointer):
-    remainingFields = list()
-    if conditions[0] == "and":
-        checkAnd = True
-        file = True
-        for condition in conditions:
-            if condition[1] == "=":
-                successfulConditions = list()
-                if file:
-                    for line in filePointer:
-                        fields = getFields(line)
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) == int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            remainingFields.append(fields)
-                    file = False
-                else:
-                    temp = list()
-                    for fields in remainingFields:
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) == int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            temp.append(fields)
-                    remainingFields = temp
+def clean(db):
+    newDB = list()
+    for row in db:
+        row = row.strip(" \n")
+        newDB.append(row)
+    return newDB
 
-            elif condition[1] == "<":
-                if file:
-                    for line in filePointer:
-                        fields = getFields(line)
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) < int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            remainingFields.append(fields)
-                    file = False
-                else:
-                    temp = list()
-                    for fields in remainingFields:
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) < int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            temp.append(fields)
-                    remainingFields = temp
-            elif condition[1] == ">":
-                if file:
-                    for line in filePointer:
-                        fields = getFields(line)
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) > int(condition[2]):
-                                isTrue = True
-                        if isTrue:
-                            remainingFields.append(fields)
-                    file = False
-                else:
-                    temp = list()
-                    for fields in remainingFields:
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) > int(condition[2]):
-                                isTrue = True
-                        if isTrue:
-                            temp.append(fields)
-                    remainingFields = temp
-            elif condition[1] == "<=":
-                if file:
-                    for line in filePointer:
-                        fields = getFields(line)
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) <= int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            remainingFields.append(fields)
-                    file = False
-                else:
-                    temp = list()
-                    for fields in remainingFields:
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) <= int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            temp.append(fields)
-                    remainingFields = temp
-            elif condition[1] == ">=":
-                if file:
-                    for line in filePointer:
-                        fields = getFields(line)
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) >= int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            remainingFields.append(fields)
-                    file = False
-                else:
-                    temp = list()
-                    for fields in remainingFields:
-                        isTrue = False
-                        for field in fields:
-                            if field[0] == condition[0] and int(field[1]) >= int(condition[2]):
-                                isTrue = True
-                        if(isTrue):
-                            temp.append(fields)
-                    remainingFields = temp
-    return remainingFields
+def filter(conditions,db):
+    result = list()
+    isAnd = False
+    isOr = False
+    for condition in conditions:
+        if condition != "and" and condition != "or" and not isAnd and not isOr:
+            for row in db:
+                field = condition[0]
+                operator = get_operator_fn(condition[1])
+                value = condition[2]
+                rowFields = row.split(" ")
+                rowAppended = False
+                for i in range(0,int(len(rowFields)/2)):
+                    if not rowAppended:
+                        rowField = rowFields[2*i].strip(":")
+                        rowValue = rowFields[2*i + 1]
+                        if field == rowField:
+                            if operator(rowValue,value):
+                                result.append(row)
+                                rowAppended = True
+        if isAnd:
+            tempConditions = list()
+            tempConditions.append(condition)
+            result = filter(tempConditions, result)
+            isAnd = False
+        if isOr:
+            tempConditions = list()
+            tempConditions.append(condition)
+            tempResult = filter(tempConditions, db)
+            for item in tempResult:
+                result.append(item)
+            isOr = False
+        if condition == "and":
+            isAnd = True
+        if condition == "or":
+            isOr = True
+
+    return result
 
 def main():
     print("NoSQL Interpreter")
     #query = input("Enter a query: ")
-    query = "db.CS457.query(Dept < 20 and SNum <= 1000)"
+    query = "db.CS457.query(Age = 49 or EID = 720)"
     query = query.split(".")
+    db = ''
     with open (query[1]+'.txt', 'r') as collection:
-        command = query[2].split("(")[0]
-        if command == "query":
-            parameters = query[2].split("(")[1].strip(")")
-            if parameters == '':
-                printAllFields(collection)
-            else:
-                parameters = parameters.split(",")
-                conditions = getConditions(parameters[0])
-                fields = processConditions(conditions, collection)
-                for field in fields:
-                    print(field)
-                #fields = getFields(parameters[1])
-                for parameter in parameters:
-                    for doc in collection:
-                        for field in doc:
-                            if field.find(parameter) != -1:
-                                print(field)
+        db = collection.readlines()
+        db = clean(db)
+    collection.close()
+    #print(db)
+    command = query[2].split("(")[0]
+    parameters = query[2].split("(")[1].strip(")")
+    if command == "query":
+        if parameters == '':
+            printAllFields(collection)
+        else:
+            parameters = parameters.split(",")
+            conditions = parseConditions(parameters[0])
+            fields = filter(conditions, db)
+            for field in fields:
+                print(field)
+            # fields = getFields(parameters[1])
+            # for parameter in parameters:
+            #     for doc in collection:
+            #         for field in doc:
+            #             if field.find(parameter) != -1:
+            #                 print(field)
 
 
 main()
