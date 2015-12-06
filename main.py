@@ -26,16 +26,31 @@ def parseConditions(conditions):
             statement.append(condition)
     returnConditions.append(statement)
     return returnConditions
-def getFields(fields):
-    returnFields = list()
-    fields = fields.split(" ")
-    while(len(fields)  > 0):
-        field0 = fields[0]
-        field1 = fields[1]
-        returnFields.append([field0.strip(":"), field1.strip("\n")])
-        fields.remove(field0)
-        fields.remove(field1)
-    return returnFields
+
+
+
+def filterFields(parsedFields,fields):
+    returnList = list()
+    returnRow = ''
+    fields = fields.split("+")
+    for row in parsedFields:
+        row = row.split(" ")
+        for field in fields:
+            for i in range(0, int(len(row)/2)):
+                rowField = row[2*i].strip(":")
+                rowValue = row[2*i + 1]
+                if rowField == field:
+                    returnRow += rowField + ": " + rowValue + " "
+        if returnRow != '':
+            returnList.append(returnRow)
+        returnRow = ''
+    return returnList
+
+
+
+
+
+
 
 def clean(db):
     newDB = list()
@@ -86,7 +101,7 @@ def filter(conditions,db):
 def main():
     print("NoSQL Interpreter")
     #query = input("Enter a query: ")
-    query = "db.CS457.query(Age = 49 or EID = 720)"
+    query = "db.CS457.query(Manager = 555, SNum+Dept)"
     query = query.split(".")
     db = ''
     with open (query[1]+'.txt', 'r') as collection:
@@ -102,15 +117,14 @@ def main():
         else:
             parameters = parameters.split(",")
             conditions = parseConditions(parameters[0])
-            fields = filter(conditions, db)
-            for field in fields:
-                print(field)
-            # fields = getFields(parameters[1])
-            # for parameter in parameters:
-            #     for doc in collection:
-            #         for field in doc:
-            #             if field.find(parameter) != -1:
-            #                 print(field)
+            parsedFields = filter(conditions, db)
+            returnFields = filterFields(parsedFields,parameters[1].strip(" "))
+            for row in returnFields:
+                print(row)
+
+
+
+
 
 
 main()
