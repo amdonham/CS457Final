@@ -9,8 +9,8 @@ def get_operator_fn(op):
         '<=' : operator.le
         }[op]
 
-def printAllFields(filePointer):
-    for line in filePointer:
+def printAllFields(db):
+    for line in db:
         print(line)
 
 def parseConditions(conditions):
@@ -161,7 +161,7 @@ def main():
         parameters = query[2].split("(")[1].strip(")")
         if command == "query":
             if parameters == '':
-                printAllFields(collection)
+                printAllFields(db)
             else:
                 parameters = parameters.split(",")
                 conditions = parseConditions(parameters[0])
